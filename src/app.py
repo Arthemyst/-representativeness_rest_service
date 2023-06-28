@@ -13,6 +13,11 @@ app.config["SESSION_PERMANENT"] = False
 models_directory = CustomEnvironment.get_models_directory()
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return "Hello, world!"
+
+
 @app.route("/clear_session", methods=["GET"])
 def clear_session():
     session.clear()
