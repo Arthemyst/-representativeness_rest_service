@@ -1,0 +1,42 @@
+<html>
+
+<head>
+    <title>Predict</title>
+</head>
+
+<body>
+    <h1>Predict</h1>
+    {% if model_available %}
+    <form id="predict-form" method="POST" action="/predict">
+        <label for="data">Enter data:</label>
+        <textarea id="data" name="data" rows="4" cols="50"></textarea><br>
+        <button type="submit">Predict</button>
+    </form>
+    {% endif %}
+
+    {% if prediction %}
+    <div>
+        <h2>Prediction Result:</h2>
+        <p>{{ prediction }}</p>
+    </div>
+    {% elif bad_data %}
+    <p>Bad data, please put proper format</p>
+    {% endif %}
+
+    {% if not model_available %}
+    <p>No trained model available. Please train a model first.</p>
+    <button onclick="redirectToTrainPage()">Train Model</button>
+    {% endif %}
+    <button onclick="redirectToStatusPage()">Status</button>
+
+    <script>
+        function redirectToTrainPage() {
+            window.location.href = "/train";
+        }
+        function redirectToStatusPage() {
+            window.location.href = "/status";
+        }
+    </script>
+</body>
+
+</html>
