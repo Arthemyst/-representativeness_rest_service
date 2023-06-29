@@ -5,3 +5,5 @@ django-environ
 python-dotenv
 isort
 black
+pytest
+pytest-cov
