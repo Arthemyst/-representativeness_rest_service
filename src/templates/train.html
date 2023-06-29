@@ -3,32 +3,52 @@
 
 <head>
     <title>Train Model</title>
+    <style>
+        .frame {
+            border: 1px solid black;
+            padding: 10px;
+            width: 300px;
+        }
+
+        .content {
+            padding: 10px;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Train Model</h1>
 
-    {% if training_in_progress %}
-    <p>Training is still in progress...</p>
-    <p>Training started at: {{ training_start_time }}</p>
-    {% else %}
-    <p>Training is not in progress.</p>
-    <p>Please use format like in example:</p>
-    <p>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]</p>
-    <p>Input data must be list of lists with integers with equal length</p>
-    <p>For a better model training result, use as many objects (lists of integers) as possible in the list.</p>
-    <form id="train-form" method="POST" action="/train">
-        <label for="data">Data:</label><br>
-        <textarea id="data" name="data" rows="5" cols="40"></textarea><br><br>
-        <button type="submit">Start Training</button>
-    </form>
-    {% endif %}
-    {% if msg %}
-    <p>{{ msg }}</p>
-    {% endif %}
-    <p><button onclick="redirectToStatusPage()">Status</button></p>
-    <script>
+    <div class="frame">
+        {% if training_in_progress %}
+        <h3>Training is still in progress...</h3>
+        <h3>Training started at: {{ training_start_time }}</h3>
+        {% else %}
+        <h3>Training is not in progress.</h3>
+        <p>Please use format like in example:</p>
+        <p>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]</p>
+        {% endif %}
+    </div>
 
+    <div class="content">
+        {% if not training_in_progress %}
+        <p>Input data must be a list of lists with integers of equal length.</p>
+        <p>For better model training results, include as many objects (lists of integers) as possible in the list.</p>
+        <form id="train-form" method="POST" action="/train">
+            <label for="data">Data:</label><br>
+            <textarea id="data" name="data" rows="5" cols="40"></textarea><br><br>
+            <button type="submit">Start Training</button>
+        </form>
+        {% endif %}
+
+        {% if msg %}
+        <p>{{ msg }}</p>
+        <p>For more information about error, please click status button.</p>
+        {% endif %}
+        <p><button onclick="redirectToStatusPage()">Status</button></p>
+    </div>
+
+    <script>
         function redirectToStatusPage() {
             window.location.href = "/status";
         }
