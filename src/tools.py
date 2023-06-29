@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 
@@ -22,8 +23,13 @@ def load_models(directory: str) -> list:
     return models
 
 
-def prepare_data(data: str) -> np.ndarray:
+def prepare_data_for_prediction(data: str) -> np.ndarray:
     data = list(map(int, data.strip("[]").split(",")))
     data = np.array(data)
     data = data.reshape(1, -1)
     return data
+
+
+def prepare_data_for_train(data: str) -> list:
+    data_list = json.loads(data)
+    return list(data_list)

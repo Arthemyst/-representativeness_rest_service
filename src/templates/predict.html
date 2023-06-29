@@ -7,8 +7,9 @@
 <body>
     <h1>Predict</h1>
     {% if model_available %}
+    <p>Please provide list with amount of integers elements equal to {{elements_of_object}}</p>
     <form id="predict-form" method="POST" action="/predict">
-        <label for="data">Enter data:</label>
+        <div><label for="data">Enter data:</label></div>
         <textarea id="data" name="data" rows="4" cols="50"></textarea><br>
         <button type="submit">Predict</button>
     </form>
@@ -20,7 +21,7 @@
         <p>{{ prediction }}</p>
     </div>
     {% elif bad_data %}
-    <p>Bad data, please put proper format</p>
+    <p>Bad data, please put proper format!</p>
     {% endif %}
 
     {% if not model_available %}

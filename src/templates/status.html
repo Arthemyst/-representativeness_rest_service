@@ -16,8 +16,15 @@
 
     {% if not training_in_progress %}
     {% if not model_created %}
+    {% if not error_message %}
     <p>No training is currently in progress and no model is prepared.</p>
     <button onclick="redirectToTrainPage()">Train Model</button>
+    {% else %}
+    <p>Error during training!</p>
+    <p>Error: {{ error_message }}</p>
+    <p>Error time: {{ error_time }}</p>
+    <button onclick="redirectToTrainPage()">Train Model</button>
+    {% endif %}
     {% endif %}
     {% endif %}
 

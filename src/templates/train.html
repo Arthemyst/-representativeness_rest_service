@@ -13,31 +13,21 @@
     <p>Training started at: {{ training_start_time }}</p>
     {% else %}
     <p>Training is not in progress.</p>
-    <form id="train-form" method="POST">
+    <p>Please use format like in example:</p>
+    <p>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]</p>
+    <p>Input data must be list of lists with integers with equal length</p>
+    <p>For a better model training result, use as many objects (lists of integers) as possible in the list.</p>
+    <form id="train-form" method="POST" action="/train">
         <label for="data">Data:</label><br>
         <textarea id="data" name="data" rows="5" cols="40"></textarea><br><br>
         <button type="submit">Start Training</button>
     </form>
     {% endif %}
-    <button onclick="redirectToStatusPage()">Status</button>
+    {% if msg %}
+    <p>{{ msg }}</p>
+    {% endif %}
+    <p><button onclick="redirectToStatusPage()">Status</button></p>
     <script>
-        document.getElementById("train-form").addEventListener("submit", function (event) {
-            event.preventDefault();
-            const data = document.getElementById("data").value;
-            const jsonData = JSON.parse(data);
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "/train");
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    window.location.href = "/status";
-                } else {
-                    console.error("Error:", xhr.status);
-                }
-            };
-            xhr.send(JSON.stringify(jsonData));
-        });
 
         function redirectToStatusPage() {
             window.location.href = "/status";
