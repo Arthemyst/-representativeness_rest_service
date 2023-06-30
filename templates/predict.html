@@ -18,7 +18,9 @@
 <body>
     <h1>Predict</h1>
     {% if model_available %}
-    <p>Please provide list with amount of integers elements equal to {{elements_of_object}}</p>
+    <p>Please provide list with objects (each object is list with count of integers element qual to
+        {{elements_of_object}})</p>
+    <p>ex: [[1,2,3]] or [[1,2,3],[2,3,4]]</p>
     <form id="predict-form" method="POST" action="/predict">
         <div><label for="data">Enter data:</label></div>
         <textarea id="data" name="data" rows="4" cols="50"></textarea><br>

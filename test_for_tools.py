@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 # Import the functions to be tested
-from tools import (
+from tools.tools import (
     remove_old_models,
     load_models,
     prepare_data_for_prediction,
@@ -40,7 +40,7 @@ def test_load_models(tmpdir):
 
 
 def test_prepare_data_for_prediction():
-    data = "[1, 2, 3, 4, 5]"
+    data = [1, 2, 3, 4, 5]
     prepared_data = prepare_data_for_prediction(data)
 
     assert isinstance(prepared_data, np.ndarray)

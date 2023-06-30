@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
-from model_training import (
+from tools.model_training import (
     calculate_distance,
     calculate_representativeness,
     calculate_ensemble_prediction,

@@ -1,8 +1,7 @@
 from unittest.mock import patch
-from environ import ImproperlyConfigured
 import pytest
 
-from config import CustomEnvironment
+from tools.environment_config import CustomEnvironment
 
 
 def test_get_secret_key_no_secret_key():

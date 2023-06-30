@@ -1,7 +1,7 @@
 import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -21,7 +21,7 @@ def calculate_representativeness(X: np.ndarray, k: int) -> Union[float, np.float
     return 1 / (1 + distance)
 
 
-def calculate_ensemble_prediction(models: list[LinearRegression], X: np.ndarray):
+def calculate_ensemble_prediction(models: List[LinearRegression], X: np.ndarray):
     predictions = [model.predict(X) for model in models]
     return np.mean(predictions, axis=0)
 
@@ -36,8 +36,8 @@ def train_model(subset: np.ndarray, k: int) -> LinearRegression:
 
 
 def representative_learning(
-    subsets: list[np.ndarray], k: int
-) -> list[LinearRegression]:
+    subsets: List[np.ndarray], k: int
+) -> List[LinearRegression]:
     models = []
     with ThreadPoolExecutor() as executor:
         futures = []
@@ -87,7 +87,7 @@ def find_optimal_L(
     return optimal_L
 
 
-def random_split_data(X: np.ndarray, L: int) -> list[np.ndarray]:
+def random_split_data(X: np.ndarray, L: int) -> List[np.ndarray]:
     subsets = np.array_split(X, L)
     return subsets
 

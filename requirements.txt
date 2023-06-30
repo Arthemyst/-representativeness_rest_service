@@ -7,3 +7,4 @@ isort
 black
 pytest
 pytest-cov
+celery[redis]
