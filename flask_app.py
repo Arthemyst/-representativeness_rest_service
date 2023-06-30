@@ -1,6 +1,7 @@
 from datetime import datetime
 from json import JSONDecodeError
 import os
+import json
 from flask import Flask, jsonify, render_template, request, session
 from tasks import train_models_task
 from tools.environment_config import CustomEnvironment
@@ -66,11 +67,15 @@ def train():
             session.update(
                 {
                     "training_in_progress": True,
-                    "training_start_time": datetime.now(),
+                    "training_start_time": str(datetime.now()),
                     "training_finished": False,
                 }
             )
-            train_models_task.delay(data, session)
+            session_data = dict(session)
+            serialized_session = json.dumps(session_data)
+            task = train_models_task.apply_async(args=[serialized_session, data])
+
+            # train_models_task.delay(data, serialized_session)
             session["elements_in_list"] = len(data[0])
             if not session["model_created"]:
                 return render_template(
@@ -217,7 +222,7 @@ def predict():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                 }
             )
@@ -230,7 +235,7 @@ def predict():
         except Exception as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                 }
             )
@@ -240,7 +245,16 @@ def predict():
                 model_available=True,
                 elements_of_object=elements_of_object,
             )
+@app.route('/get_result/<task_id>')
+def get_result(task_id):
+    # Retrieve the result from the Celery task using the task ID
+    result = train_models_task.AsyncResult(task_id).get()
 
+    # Update the session with the result
+    session['result'] = result
+
+    # Return a response indicating success
+    return 'Result retrieved and loaded into session'
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
