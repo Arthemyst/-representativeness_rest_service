@@ -8,3 +8,5 @@ black
 pytest
 pytest-cov
 celery
+amqp
+redis

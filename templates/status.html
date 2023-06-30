@@ -3,6 +3,7 @@
 
 <head>
     <title>Training Status</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <style>
     .frame {
@@ -18,6 +19,8 @@
         {% if training_in_progress %}
         <p>Training is still in progress.</p>
         <p>Training started at: {{ training_start_time }}</p>
+        <button onclick="redirectToStatusPage()">Refresh page</button>
+        <button onclick="redirectToHomePage()">Home page</button>
         {% endif %}
 
         {% if not training_in_progress %}
@@ -57,7 +60,25 @@
         function redirectToPredictPage() {
             window.location.href = "/predict";
         }
-
+        function redirectToStatusPage() {
+            window.location.href = "/status";
+        }
+        function redirectToHomePage() {
+            window.location.href = "/";
+        }
+    </script>
+    <script>
+        setInterval(function () {
+            $.ajax({
+                url: '/status',
+                type: 'GET',
+                success: function (response) {
+                    if (response.training_in_progress) {
+                        location.reload();
+                    }
+                }
+            });
+        }, 5000);
     </script>
 </body>
 

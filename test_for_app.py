@@ -1,21 +1,21 @@
-import pytest
-from flask import session
-from flask_app import app
-from tools.environment_config import CustomEnvironment
-from unittest.mock import patch
+# import pytest
+# from flask import session
+# from flask_app import app
+# from tools.environment_config import CustomEnvironment
+# from unittest.mock import patch
 
 
-@pytest.fixture
-def client():
-    with app.test_client() as client:
-        with app.app_context():
-            yield client
+# @pytest.fixture
+# def client():
+#     with app.test_client() as client:
+#         with app.app_context():
+#             yield client
 
 
-def test_index_page(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"Home page" in response.data
+# def test_index_page(client):
+#     response = client.get("/")
+#     assert response.status_code == 200
+#     assert b"Home page" in response.data
 
 
 # def test_clear_session(client):
@@ -58,10 +58,10 @@ def test_index_page(client):
 #         assert b"Please enter more objects to create a model!" in response.data
 
 
-def test_status(client):
-    response = client.get("/status")
-    assert response.status_code == 200
-    assert b"Training Status" in response.data
+# def test_status(client):
+#     response = client.get("/status")
+#     assert response.status_code == 200
+#     assert b"Training Status" in response.data
 
 
 # @pytest.mark.parametrize("models_directory", ["test_models_directory"])

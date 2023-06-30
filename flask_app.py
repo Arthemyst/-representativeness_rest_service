@@ -2,8 +2,9 @@ from datetime import datetime
 from json import JSONDecodeError
 import os
 import json
+from tools.model_training import create_models
+from celery import Celery
 from flask import Flask, jsonify, render_template, request, session
-from tasks import train_models_task
 from tools.environment_config import CustomEnvironment
 from tools.model_training import calculate_ensemble_prediction
 from tools.tools import (
@@ -14,6 +15,11 @@ from tools.tools import (
 )
 
 app = Flask(__name__)
+app.config["CELERY_BROKER_URL"] = "redis://redis:6379/0"
+app.config["CELERY_RESULT_BACKEND"] = "redis://redis:6379/0"
+
+celery = Celery(app.name, broker=app.config["CELERY_BROKER_URL"])
+celery.conf.update(app.config)
 
 app.secret_key = CustomEnvironment.get_secret_key()
 app.config["SESSION_PERMANENT"] = False
@@ -40,6 +46,19 @@ def clear_session():
 @app.route("/train", methods=["GET", "POST"])
 def train():
     if request.method == "GET":
+        task_id = session.get("task_id")
+        session["training_in_progress"] = False
+
+        # If task ID exists, check the status of the task
+        if task_id:
+            task = train_models_task.AsyncResult(task_id)
+            if task.ready():
+                # Task is completed, retrieve the result
+                # session['result'] = task.get()
+                session["training_in_progress"] = False
+            else:
+                # Task is still in progress
+                session["training_in_progress"] = True
         return render_template(
             "train.html",
             training_in_progress=session.get("training_in_progress", False),
@@ -64,6 +83,10 @@ def train():
                 return render_template(
                     "train.html", bad_data=True, msg=session.get("error_message")
                 )
+
+            session_data = {}
+            for key, value in session.items():
+                session_data[key] = value
             session.update(
                 {
                     "training_in_progress": True,
@@ -71,11 +94,8 @@ def train():
                     "training_finished": False,
                 }
             )
-            session_data = dict(session)
-            serialized_session = json.dumps(session_data)
-            task = train_models_task.apply_async(args=[serialized_session, data])
+            task = train_models_task.apply_async(args=[data])
 
-            # train_models_task.delay(data, serialized_session)
             session["elements_in_list"] = len(data[0])
             if not session["model_created"]:
                 return render_template(
@@ -97,7 +117,7 @@ def train():
         except JSONDecodeError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -111,7 +131,7 @@ def train():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -130,7 +150,7 @@ def train():
         except Exception as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -245,16 +265,45 @@ def predict():
                 model_available=True,
                 elements_of_object=elements_of_object,
             )
-@app.route('/get_result/<task_id>')
-def get_result(task_id):
-    # Retrieve the result from the Celery task using the task ID
-    result = train_models_task.AsyncResult(task_id).get()
 
-    # Update the session with the result
-    session['result'] = result
 
-    # Return a response indicating success
-    return 'Result retrieved and loaded into session'
+@celery.task
+def train_models_task(data):
+    with app.app_context():
+        try:
+            create_models(data)
+            session["model_created"] = True
+            session["training_finished"] = True
+            session["training_end_time"] = str(datetime.now())
+            session["training_in_progress"] = False
+            session["error_msg_for_train_page"] = None
+            session["error_time"] = False
+            session["error_message"] = False
+
+        except ValueError as e:
+            error_msg = "Bad data format. Please use list of lists of integers with the same length."
+            if str(e) == "Value of k should be less than the number of samples.":
+                error_msg = "Please enter more objects to create a model!"
+            session["model_created"] = False
+            session["training_finished"] = False
+            session["training_end_time"] = None
+            session["training_in_progress"] = False
+            session["error_msg_for_train_page"] = error_msg
+            session["error_time"] = str(datetime.now())
+            session["error_message"] = str(e)
+
+        except Exception as e:
+            error_msg = "WRONG"
+            if str(e) == "Value of k should be less than the number of samples.":
+                error_msg = "Please enter more objects to create a model!"
+            session["model_created"] = False
+            session["training_finished"] = False
+            session["training_end_time"] = None
+            session["training_in_progress"] = False
+            session["error_msg_for_train_page"] = error_msg
+            session["error_time"] = str(datetime.now())
+            session["error_message"] = str(e)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")

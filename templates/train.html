@@ -3,6 +3,7 @@
 
 <head>
     <title>Train Model</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .frame {
             border: 1px solid black;
@@ -53,6 +54,21 @@
         function redirectToStatusPage() {
             window.location.href = "/status";
         }
+    </script>
+    <script>
+        // Periodically check for specific item change
+        setInterval(function () {
+            $.ajax({
+                url: '/train',
+                type: 'GET',
+                success: function (response) {
+                    if (response.training_in_progress) {
+                        // Reload the page if the specific item has changed
+                        location.reload();
+                    }
+                }
+            });
+        }, 5000);  // Adjust the interval as needed (e.g., every 5 seconds)
     </script>
 </body>
 
