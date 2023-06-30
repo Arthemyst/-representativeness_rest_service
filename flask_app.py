@@ -3,10 +3,8 @@ from json import JSONDecodeError
 import os
 from flask import Flask, jsonify, render_template, request, session
 from tasks import train_models_task
-from celery.utils.log import get_task_logger
 from tools.environment_config import CustomEnvironment
 from tools.model_training import calculate_ensemble_prediction
-from tasks import train_models_task
 from tools.tools import (
     load_models,
     prepare_data_for_prediction,
@@ -73,26 +71,34 @@ def train():
                 }
             )
 
-            train_models_task.delay(data)
-
-            session.update(
-                {
-                    "model_created": True,
-                    "training_finished": True,
-                    "training_end_time": datetime.now(),
-                    "training_in_progress": False,
-                    "error_time": False,
-                    "error_message": False,
-                }
-            )
-
-            return render_template(
-                "status.html",
-                model_created=True,
-                training_finished=True,
-                training_end_time=session["training_end_time"],
-                training_start_time=session["training_start_time"],
-            )
+            response_from_task = train_models_task.delay(data)
+            response_dict = response_from_task.get()
+            session["model_created"] = response_dict["model_created"]
+            session["training_finished"] = response_dict["training_finished"]
+            session["training_end_time"] = response_dict["training_end_time"]
+            session["training_in_progress"] = response_dict["training_in_progress"]
+            session["error_msg_for_train_page"] = response_dict[
+                "error_msg_for_train_page"
+            ]
+            session["error_time"] = response_dict["error_time"]
+            session["error_message"] = response_dict["error_message"]
+            session["elements_in_list"] = len(data[0])
+            if not session["model_created"]:
+                return render_template(
+                    "train.html",
+                    msg=session.get("error_msg_for_train_page"),
+                    error_time=session.get("error_time"),
+                    error_message=session.get("error_message"),
+                    train_in_progress=session.get("training_in_progress"),
+                )
+            else:
+                return render_template(
+                    "status.html",
+                    model_created=session["model_created"],
+                    training_finished=session["training_finished"],
+                    training_end_time=session["training_end_time"],
+                    training_start_time=session["training_start_time"],
+                )
 
         except JSONDecodeError as e:
             session.update(
@@ -122,7 +128,6 @@ def train():
                 error_msg = "Please enter more objects to create a model!"
             return render_template(
                 "train.html",
-                bad_data=True,
                 msg=error_msg,
                 error_time=session.get("error_time"),
                 error_message=session.get("error_message"),
@@ -250,4 +255,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")

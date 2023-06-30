@@ -3,7 +3,6 @@ import pickle
 import numpy as np
 import pytest
 
-# Import the functions to be tested
 from tools.tools import (
     remove_old_models,
     load_models,
