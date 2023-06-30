@@ -94,25 +94,15 @@ def train():
                     "training_finished": False,
                 }
             )
-            task = train_models_task.apply_async(args=[data])
-
             session["elements_in_list"] = len(data[0])
-            if not session["model_created"]:
-                return render_template(
-                    "train.html",
-                    msg=session.get("error_msg_for_train_page"),
-                    error_time=session.get("error_time"),
-                    error_message=session.get("error_message"),
-                    train_in_progress=session.get("training_in_progress"),
-                )
-            else:
-                return render_template(
-                    "status.html",
-                    model_created=session["model_created"],
-                    training_finished=session["training_finished"],
-                    training_end_time=session["training_end_time"],
-                    training_start_time=session["training_start_time"],
-                )
+            task = train_models_task.delay(data)
+            session["task_id"] = task.id
+            
+   
+
+
+            return render_template("status.html", task_id=str(task.id))
+
 
         except JSONDecodeError as e:
             session.update(
@@ -267,42 +257,78 @@ def predict():
             )
 
 
+@app.route("/status/<task_id>", methods=["GET"])
+def train_status(task_id):
+    # Retrieve the task result from Celery using the task ID
+    task_result = celery.AsyncResult(task_id)
+
+    if task_result.ready():
+        # If the task is complete, retrieve the result
+        session["training_in_progress"] = True
+        session["model_created"] = True
+        session["training_finished"] = True
+
+        # Render the status.html template with the task ID, status, and result
+        return render_template(
+            "status.html",
+            task_id=task_id,
+            training_in_progress=session["training_in_progress"],
+            model_created=session["model_created"],
+            training_finished=session["training_finished"],
+            training_start_time=session["training_start_time"]
+        )
+    else:
+        session["training_in_progress"] = False
+        session["model_created"] = False
+        session["training_finished"] = False
+        return render_template(
+            "status.html",
+            task_id=task_id,
+            training_in_progress=session["training_in_progress"],
+            model_created=session["model_created"],
+            training_finished=session["training_finished"],
+            training_start_time=session["training_start_time"]
+        )
+
 @celery.task
 def train_models_task(data):
-    with app.app_context():
-        try:
-            create_models(data)
-            session["model_created"] = True
-            session["training_finished"] = True
-            session["training_end_time"] = str(datetime.now())
-            session["training_in_progress"] = False
-            session["error_msg_for_train_page"] = None
-            session["error_time"] = False
-            session["error_message"] = False
 
-        except ValueError as e:
-            error_msg = "Bad data format. Please use list of lists of integers with the same length."
-            if str(e) == "Value of k should be less than the number of samples.":
-                error_msg = "Please enter more objects to create a model!"
-            session["model_created"] = False
-            session["training_finished"] = False
-            session["training_end_time"] = None
-            session["training_in_progress"] = False
-            session["error_msg_for_train_page"] = error_msg
-            session["error_time"] = str(datetime.now())
-            session["error_message"] = str(e)
+    try:
+        create_models(data)
+        session["model_created"] = True
+        session["training_finished"] = True
+        session["training_end_time"] = str(datetime.now())
+        session["training_in_progress"] = False
+        session["error_msg_for_train_page"] = None
+        session["error_time"] = False
+        session["error_message"] = False
+        return session
 
-        except Exception as e:
-            error_msg = "WRONG"
-            if str(e) == "Value of k should be less than the number of samples.":
-                error_msg = "Please enter more objects to create a model!"
-            session["model_created"] = False
-            session["training_finished"] = False
-            session["training_end_time"] = None
-            session["training_in_progress"] = False
-            session["error_msg_for_train_page"] = error_msg
-            session["error_time"] = str(datetime.now())
-            session["error_message"] = str(e)
+    except ValueError as e:
+        error_msg = "Bad data format. Please use list of lists of integers with the same length."
+        if str(e) == "Value of k should be less than the number of samples.":
+            error_msg = "Please enter more objects to create a model!"
+        session["model_created"] = False
+        session["training_finished"] = False
+        session["training_end_time"] = None
+        session["training_in_progress"] = False
+        session["error_msg_for_train_page"] = error_msg
+        session["error_time"] = str(datetime.now())
+        session["error_message"] = str(e)
+        return session
+
+    except Exception as e:
+        error_msg = "WRONG"
+        if str(e) == "Value of k should be less than the number of samples.":
+            error_msg = "Please enter more objects to create a model!"
+        session["model_created"] = False
+        session["training_finished"] = False
+        session["training_end_time"] = None
+        session["training_in_progress"] = False
+        session["error_msg_for_train_page"] = error_msg
+        session["error_time"] = str(datetime.now())
+        session["error_message"] = str(e)
+        return session
 
 
 if __name__ == "__main__":
