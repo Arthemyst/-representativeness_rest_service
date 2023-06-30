@@ -4,31 +4,26 @@ from datetime import datetime
 
 
 @app.task
-def train_models_task(data):
+def train_models_task(data, session):
+    session["model_created"] = False
     try:
         create_models(data)
-        return {
-            "model_created": True,
-            "training_finished": True,
-            "training_end_time": datetime.now(),
-            "training_in_progress": False,
-            "error_msg_for_train_page": None,
-            "error_time": False,
-            "error_message": False,
-        }
+        session["model_created"] = True
+        session["training_finished"] = True
+        session["training_end_time"] = datetime.now()
+        session["training_in_progress"] = False
+        session["error_msg_for_train_page"] = None
+        session["error_time"] = False
+        session["error_message"] = False
 
     except ValueError as e:
-        error_msg = (
-            "Bad data format. Please use list of lists of integers with same length."
-        )
+        error_msg = "Bad data format. Please use list of lists of integers with the same length."
         if str(e) == "Value of k should be less than the number of samples.":
             error_msg = "Please enter more objects to create a model!"
-        return {
-            "model_created": False,
-            "training_finished": False,
-            "training_end_time": None,
-            "training_in_progress": False,
-            "error_msg_for_train_page": error_msg,
-            "error_time": datetime.now(),
-            "error_message": str(e),
-        }
+        session["model_created"] = False
+        session["training_finished"] = False
+        session["training_end_time"] = None
+        session["training_in_progress"] = False
+        session["error_msg_for_train_page"] = error_msg
+        session["error_time"] = datetime.now()
+        session["error_message"] = str(e)

@@ -70,18 +70,7 @@ def train():
                     "training_finished": False,
                 }
             )
-
-            response_from_task = train_models_task.delay(data)
-            response_dict = response_from_task.get()
-            session["model_created"] = response_dict["model_created"]
-            session["training_finished"] = response_dict["training_finished"]
-            session["training_end_time"] = response_dict["training_end_time"]
-            session["training_in_progress"] = response_dict["training_in_progress"]
-            session["error_msg_for_train_page"] = response_dict[
-                "error_msg_for_train_page"
-            ]
-            session["error_time"] = response_dict["error_time"]
-            session["error_message"] = response_dict["error_message"]
+            train_models_task.delay(data, session)
             session["elements_in_list"] = len(data[0])
             if not session["model_created"]:
                 return render_template(
@@ -110,7 +99,6 @@ def train():
             )
             return render_template(
                 "train.html",
-                bad_data=True,
                 msg="Bad data format. Please use list of lists of integers with same length.",
                 train_in_progress=session.get("training_in_progress"),
             )
