@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install pytest
+RUN python -m venv venv
+RUN venv/bin/pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "flask_app.py"]
+CMD ["venv/bin/python", "flask_app.py"]
