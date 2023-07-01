@@ -3,7 +3,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     ports:
       - 5000:5000
     volumes:
@@ -17,7 +17,7 @@ services:
   celery-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     volumes:
       - .:/app
     depends_on:
@@ -26,9 +26,9 @@ services:
   tests:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     volumes:
       - .:/app
     depends_on:
       - redis
-    command: pytest
+    command: pytest tests
