@@ -29,20 +29,23 @@ jobs:
 
       - name: Start Docker container
         id: start_container
-        run: docker run -d --network host flask_app
+        run: |
+          docker run -d --network host --name flask_app_container flask_app
+          echo "::set-output name=container_name::flask_app_container"
 
-      - name: Wait for container to start
-        run: sleep 10
-
-      - name: Store container ID
-        id: store_container_id
-        run: echo "CONTAINER_ID=${{ steps.start_container.outputs.container_id }}" >> $GITHUB_ENV
+      - name: Get container ID
+        id: get_container_id
+        run: |
+          container_name=${{ steps.start_container.outputs.container_name }}
+          container_id=$(docker ps -aqf "name=$container_name")
+          echo "::set-output name=container_id::$container_id"
 
       - name: Run tests
         run: |
-          container_id=${{ steps.store_container_id.outputs.CONTAINER_ID }}
+          container_id=${{ steps.get_container_id.outputs.container_id }}
           docker exec $container_id python -m pytest
 
       - name: Stop Docker container
-        run: docker stop ${{ steps.start_container.outputs.container_id }}
-
+        run: |
+          container_id=${{ steps.get_container_id.outputs.container_id }}
+          docker stop $container_id
