@@ -292,43 +292,44 @@ def train_status(task_id):
 
 @celery.task
 def train_models_task(data):
+    session_results = {}
 
     try:
         create_models(data)
-        session["model_created"] = True
-        session["training_finished"] = True
-        session["training_end_time"] = str(datetime.now())
-        session["training_in_progress"] = False
-        session["error_msg_for_train_page"] = None
-        session["error_time"] = False
-        session["error_message"] = False
-        return session
+        session_results["model_created"] = True
+        session_results["training_finished"] = True
+        session_results["training_end_time"] = str(datetime.now())
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = None
+        session_results["error_time"] = False
+        session_results["error_message"] = False
+        return session_results
 
     except ValueError as e:
         error_msg = "Bad data format. Please use list of lists of integers with the same length."
         if str(e) == "Value of k should be less than the number of samples.":
             error_msg = "Please enter more objects to create a model!"
-        session["model_created"] = False
-        session["training_finished"] = False
-        session["training_end_time"] = None
-        session["training_in_progress"] = False
-        session["error_msg_for_train_page"] = error_msg
-        session["error_time"] = str(datetime.now())
-        session["error_message"] = str(e)
-        return session
+        session_results["model_created"] = False
+        session_results["training_finished"] = False
+        session_results["training_end_time"] = None
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = error_msg
+        session_results["error_time"] = str(datetime.now())
+        session_results["error_message"] = str(e)
+        return session_results
 
     except Exception as e:
         error_msg = "WRONG"
         if str(e) == "Value of k should be less than the number of samples.":
             error_msg = "Please enter more objects to create a model!"
-        session["model_created"] = False
-        session["training_finished"] = False
-        session["training_end_time"] = None
-        session["training_in_progress"] = False
-        session["error_msg_for_train_page"] = error_msg
-        session["error_time"] = str(datetime.now())
-        session["error_message"] = str(e)
-        return session
+        session_results["model_created"] = False
+        session_results["training_finished"] = False
+        session_results["training_end_time"] = None
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = error_msg
+        session_results["error_time"] = str(datetime.now())
+        session_results["error_message"] = str(e)
+        return session_results
 
 
 if __name__ == "__main__":
