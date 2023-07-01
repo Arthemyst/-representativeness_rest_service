@@ -35,9 +35,9 @@ jobs:
 
       - name: Wait for container to start
         run: sleep 10
-
+        
       - name: Get container ID
-        run: echo "Container ID: ${{ steps.start_container.outputs.container_id }}"
+        run: echo "Container ID: $container_id"
 
       - name: Run tests
         run: |
