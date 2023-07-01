@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 import pytest
 
 from tools.environment_config import CustomEnvironment

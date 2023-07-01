@@ -1,12 +1,13 @@
+import json
+import os
 from datetime import datetime
 from json import JSONDecodeError
-import os
-import json
-from tools.model_training import create_models
+
 from celery import Celery
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+
 from tools.environment_config import CustomEnvironment
-from tools.model_training import calculate_ensemble_prediction
+from tools.model_training import calculate_ensemble_prediction, create_models
 from tools.tools import (
     load_models,
     prepare_data_for_prediction,

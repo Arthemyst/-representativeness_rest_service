@@ -1,9 +1,11 @@
+from time import sleep
+from unittest.mock import patch
+
 import pytest
 from flask import session
+
 from flask_app import app
 from tools.environment_config import CustomEnvironment
-from unittest.mock import patch
-from time import sleep
 
 time_for_sleep = 2
 

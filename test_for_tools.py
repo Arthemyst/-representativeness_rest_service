@@ -1,13 +1,10 @@
 import os
 import pickle
+
 import numpy as np
 
-from tools.tools import (
-    remove_old_models,
-    load_models,
-    prepare_data_for_prediction,
-    prepare_data_for_train,
-)
+from tools.tools import (load_models, prepare_data_for_prediction,
+                         prepare_data_for_train, remove_old_models)
 
 
 def test_remove_old_models(tmpdir):
