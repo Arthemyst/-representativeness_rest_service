@@ -27,11 +27,17 @@ jobs:
       - name: Build Docker image
         run: docker build -t flask_app .
 
+      - name: Generate container name
+        id: container_name
+        run: |
+          echo "::set-output name=container_name::flask_app_$(date +%s)"
+
       - name: Start Docker container
         id: start_container
         run: |
-          container_id=$(docker run -d --network host flask_app)
-          echo "::set-output name=container_id::$container_id"
+          container_name=${{ steps.container_name.outputs.container_name }}
+          docker run -d --name $container_name --network host flask_app
+          echo "::set-output name=container_id::$(docker ps -qf name=$container_name)"
 
       - name: Wait for container to start
         run: sleep 10
