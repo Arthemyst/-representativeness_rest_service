@@ -1,8 +1,6 @@
 name: Docker Test
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   build:
@@ -29,23 +27,15 @@ jobs:
 
       - name: Start Docker container
         id: start_container
-        run: |
-          docker run -d --network host --name flask_app_container flask_app
-          echo "::set-output name=container_name::flask_app_container"
+        run: docker run -d --name flask_app --network host --memory=4g flask_app
 
-      - name: Get container ID
-        id: get_container_id
-        run: |
-          container_name=${{ steps.start_container.outputs.container_name }}
-          container_id=$(docker ps -aqf "name=$container_name")
-          echo "::set-output name=container_id::$container_id"
+      - name: Wait for container to start
+        run: sleep 10
 
       - name: Run tests
         run: |
-          container_id=${{ steps.get_container_id.outputs.container_id }}
+          container_id=${{ steps.start_container.outputs.container_id }}
           docker exec $container_id python -m pytest
 
       - name: Stop Docker container
-        run: |
-          container_id=${{ steps.get_container_id.outputs.container_id }}
-          docker stop $container_id
+        run: docker stop flask_app
