@@ -1,8 +1,14 @@
-name: Docker Test
+name: CI
 
 on:
   push:
+    branches:
+      - main
+      - '*'
+
   pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -13,10 +19,10 @@ jobs:
         image: redis
         ports:
           - 6379:6379
-        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        options: --entrypoint redis-server
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Set up Python
@@ -24,28 +30,28 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Build Docker image
-        run: docker build -t flask_app .
-
-      - name: Start Docker container
-        id: start_container
+      - name: Install dependencies
         run: |
-          container_id=$(docker run -d --network host flask_app)
-          echo "::set-output name=container_id::$container_id"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Wait for container to start
-        run: sleep 10
+      - name: Start Redis server
+        run: |
+          docker run -d -p 6379:6379 redis
 
-      - name: Get container ID
-        run: echo "Container ID: ${{ steps.start_container.outputs.container_id }}"
+      - name: Run Celery worker
+        env:
+          REDIS_HOST: redis
+        run: |
+          celery -A flask_app.celery worker --loglevel=info --concurrency=4
+
+      - name: Run Celery beat
+        env:
+          REDIS_HOST: redis
+        run: |
+          celery -A flask_app.celery beat --loglevel=info
 
       - name: Run tests
         run: |
-          container_id="${{ steps.start_container.outputs.container_id }}"
-          docker exec $container_id python -m pytest
-          docker logs $container_id
+          pytest
 
-      - name: Stop Docker container
-        run: |
-          container_id="${{ steps.start_container.outputs.container_id }}"
-          docker stop $container_id
