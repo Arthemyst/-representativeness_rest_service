@@ -30,11 +30,8 @@ jobs:
           docker run -d --name flask_app --network host flask_app
           docker ps -a
 
-      - name: Wait for container to be healthy
-        run: |
-          while [[ "$(docker inspect -f '{{.State.Health.Status}}' flask_app)" != "healthy" ]]; do
-              sleep 1
-          done
+      - name: Wait for container to start
+        run: sleep 10
 
       - name: Run tests
         run: |
@@ -43,3 +40,4 @@ jobs:
 
       - name: Stop Docker container
         run: docker stop flask_app
+
