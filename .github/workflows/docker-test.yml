@@ -32,8 +32,7 @@ jobs:
         run: sleep 10
 
       - name: Run tests
-        run: |
-          docker exec flask_app python -m pytest
+        run: docker exec flask_app python -m pytest
 
       - name: Stop Docker container
         run: docker stop flask_app
