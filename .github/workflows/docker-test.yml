@@ -20,15 +20,6 @@ jobs:
           - 6379:6379
         options: --entrypoint redis-server
 
-      app:
-        build:
-          context: .
-          dockerfile: Dockerfile
-        volumes:
-          - .:/app
-        depends_on:
-          - redis
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -38,15 +29,20 @@ jobs:
         with:
           python-version: 3.x
 
+      - name: Build and start containers
+        run: |
+          docker-compose up -d
+
       - name: Install dependencies
+        container: app
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run Celery worker
-        run: |
-          docker-compose run --rm celery-worker celery -A flask_app.celery worker --loglevel=info --concurrency=4
+        container: celery-worker
+        run: celery -A flask_app.celery worker --loglevel=info --concurrency=4
 
       - name: Run tests
-        run: |
-          docker-compose run --rm tests pytest
+        container: tests
+        run: pytest
