@@ -26,13 +26,17 @@ jobs:
         run: docker build -t flask_app .
 
       - name: Start Docker container
-        run: docker run -d --name flask_app --network host flask_app
+        run: |
+          docker run -d --name flask_app --network host flask_app
+          docker ps -a
 
       - name: Wait for container to start
         run: sleep 10
 
       - name: Run tests
-        run: docker exec flask_app python -m pytest
+        run: |
+          docker exec flask_app python -m pytest
+          docker logs flask_app
 
       - name: Stop Docker container
         run: docker stop flask_app
