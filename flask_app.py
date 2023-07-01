@@ -1,10 +1,13 @@
+import json
+import os
 from datetime import datetime
 from json import JSONDecodeError
-import os
-from flask import Flask, jsonify, render_template, request, session
-from tasks import train_models_task
+
+from celery import Celery
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+
 from tools.environment_config import CustomEnvironment
-from tools.model_training import calculate_ensemble_prediction
+from tools.model_training import calculate_ensemble_prediction, create_models
 from tools.tools import (
     load_models,
     prepare_data_for_prediction,
@@ -13,6 +16,11 @@ from tools.tools import (
 )
 
 app = Flask(__name__)
+app.config["CELERY_BROKER_URL"] = "redis://redis:6379/0"
+app.config["CELERY_RESULT_BACKEND"] = "redis://redis:6379/0"
+
+celery = Celery(app.name, broker=app.config["CELERY_BROKER_URL"])
+celery.conf.update(app.config)
 
 app.secret_key = CustomEnvironment.get_secret_key()
 app.config["SESSION_PERMANENT"] = False
@@ -39,6 +47,19 @@ def clear_session():
 @app.route("/train", methods=["GET", "POST"])
 def train():
     if request.method == "GET":
+        task_id = session.get("task_id")
+        session["training_in_progress"] = False
+
+        # If task ID exists, check the status of the task
+        if task_id:
+            task = train_models_task.AsyncResult(task_id)
+            if task.ready():
+                # Task is completed, retrieve the result
+                # session['result'] = task.get()
+                session["training_in_progress"] = False
+            else:
+                # Task is still in progress
+                session["training_in_progress"] = True
         return render_template(
             "train.html",
             training_in_progress=session.get("training_in_progress", False),
@@ -48,6 +69,7 @@ def train():
     if request.method == "POST":
         remove_old_models(models_directory)
         session["model_created"] = False
+        session["training_started"] = True
 
         try:
             data = request.form["data"]
@@ -63,54 +85,32 @@ def train():
                 return render_template(
                     "train.html", bad_data=True, msg=session.get("error_message")
                 )
+
+            session_data = {}
+            for key, value in session.items():
+                session_data[key] = value
             session.update(
                 {
                     "training_in_progress": True,
-                    "training_start_time": datetime.now(),
+                    "training_start_time": str(datetime.now()),
                     "training_finished": False,
                 }
             )
-
-            response_from_task = train_models_task.delay(data)
-            response_dict = response_from_task.get()
-            session["model_created"] = response_dict["model_created"]
-            session["training_finished"] = response_dict["training_finished"]
-            session["training_end_time"] = response_dict["training_end_time"]
-            session["training_in_progress"] = response_dict["training_in_progress"]
-            session["error_msg_for_train_page"] = response_dict[
-                "error_msg_for_train_page"
-            ]
-            session["error_time"] = response_dict["error_time"]
-            session["error_message"] = response_dict["error_message"]
             session["elements_in_list"] = len(data[0])
-            if not session["model_created"]:
-                return render_template(
-                    "train.html",
-                    msg=session.get("error_msg_for_train_page"),
-                    error_time=session.get("error_time"),
-                    error_message=session.get("error_message"),
-                    train_in_progress=session.get("training_in_progress"),
-                )
-            else:
-                return render_template(
-                    "status.html",
-                    model_created=session["model_created"],
-                    training_finished=session["training_finished"],
-                    training_end_time=session["training_end_time"],
-                    training_start_time=session["training_start_time"],
-                )
+            task = train_models_task.delay(data)
+            session["task_id"] = task.id
+            return redirect(url_for("train_status", task_id=str(task.id)))
 
         except JSONDecodeError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
             )
             return render_template(
                 "train.html",
-                bad_data=True,
                 msg="Bad data format. Please use list of lists of integers with same length.",
                 train_in_progress=session.get("training_in_progress"),
             )
@@ -118,7 +118,7 @@ def train():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -137,7 +137,7 @@ def train():
         except Exception as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -154,21 +154,25 @@ def train():
 
 @app.route("/status", methods=["GET"])
 def status():
+    training_started = session.get("training_started", False)
     training_in_progress = session.get("training_in_progress", False)
     training_end_time = session.get("training_end_time", False)
     model_created = session.get("model_created", False)
     training_start_time = session.get("training_start_time", False)
     error_message = session.get("error_message", False)
     error_time = session.get("error_time", False)
+    task_id = session.get("task_id", False)
 
     return render_template(
         "status.html",
+        training_started=training_started,
         training_in_progress=training_in_progress,
         training_end_time=training_end_time,
         model_created=model_created,
         training_start_time=training_start_time,
         error_message=error_message,
         error_time=error_time,
+        task_id=task_id,
     )
 
 
@@ -229,7 +233,7 @@ def predict():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                 }
             )
@@ -242,7 +246,7 @@ def predict():
         except Exception as e:
             session.update(
                 {
-                    "error_time": datetime.now(),
+                    "error_time": str(datetime.now()),
                     "error_message": str(e),
                 }
             )
@@ -252,6 +256,78 @@ def predict():
                 model_available=True,
                 elements_of_object=elements_of_object,
             )
+
+
+@app.route("/train_status/<task_id>", methods=["GET"])
+def train_status(task_id):
+    task_result = celery.AsyncResult(task_id)
+
+    if task_result.ready():
+        session_results = task_result.get()
+        session.update(session_results)
+
+        if (
+            session["error_msg_for_train_page"]
+            == "Please enter more objects to create a model!"
+        ):
+            return render_template(
+                "train.html",
+                msg=session.get("error_message"),
+                training_in_progress=session["training_in_progress"],
+                model_created=session["model_created"],
+                training_finished=session["training_finished"],
+                training_start_time=session["training_start_time"],
+            )
+
+        else:
+            return redirect(
+                url_for("status"),
+            )
+
+    else:
+        return redirect(url_for("status"))
+
+
+@celery.task
+def train_models_task(data):
+    session_results = {}
+
+    try:
+        create_models(data)
+        session_results["model_created"] = True
+        session_results["training_finished"] = True
+        session_results["training_end_time"] = str(datetime.now())
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = None
+        session_results["error_time"] = False
+        session_results["error_message"] = False
+        return session_results
+
+    except ValueError as e:
+        error_msg = "Bad data format. Please use list of lists of integers with the same length."
+        if str(e) == "Value of k should be less than the number of samples.":
+            error_msg = "Please enter more objects to create a model!"
+        session_results["model_created"] = False
+        session_results["training_finished"] = False
+        session_results["training_end_time"] = None
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = error_msg
+        session_results["error_time"] = str(datetime.now())
+        session_results["error_message"] = str(e)
+        return session_results
+
+    except Exception as e:
+        error_msg = str(e)
+        if str(e) == "Value of k should be less than the number of samples.":
+            error_msg = "Please enter more objects to create a model!"
+        session_results["model_created"] = False
+        session_results["training_finished"] = False
+        session_results["training_end_time"] = None
+        session_results["training_in_progress"] = False
+        session_results["error_msg_for_train_page"] = error_msg
+        session_results["error_time"] = str(datetime.now())
+        session_results["error_message"] = str(e)
+        return session_results
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
-from typing import Union, List
+from typing import List, Union
 
 import numpy as np
 from sklearn.linear_model import LinearRegression

@@ -3,6 +3,7 @@
 
 <head>
     <title>Train Model</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .frame {
             border: 1px solid black;
@@ -19,7 +20,6 @@
 
 <body>
     <h1>Train Model</h1>
-
     <div class="frame">
         {% if training_in_progress %}
         <h3>Training is still in progress...</h3>
@@ -53,6 +53,19 @@
         function redirectToStatusPage() {
             window.location.href = "/status";
         }
+    </script>
+    <script>
+        setInterval(function () {
+            $.ajax({
+                url: '/train',
+                type: 'GET',
+                success: function (response) {
+                    if (response.training_in_progress) {
+                        location.reload();
+                    }
+                }
+            });
+        }, 5000);
     </script>
 </body>
 

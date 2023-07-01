@@ -1,0 +1,16 @@
+# Ignore files and directories commonly excluded in Docker builds
+
+# Exclude version control directories
+.git
+.hg
+
+# Exclude editor and IDE files
+*.swp
+*.swo
+*.bak
+*~
+.idea/
+
+# Exclude system and temporary files
+.DS_Store
+Thumbs.db

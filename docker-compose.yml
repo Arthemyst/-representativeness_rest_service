@@ -9,12 +9,11 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - rabbitmq
-  rabbitmq:
-    image: rabbitmq:latest
+      - redis
+  redis:
+    image: redis:latest
     ports:
-      - 5672:5672
-      - 15672:15672
+      - 6379:6379
   celery-worker:
     build:
       context: .
@@ -22,8 +21,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - rabbitmq
-    command: celery -A celery_worker.app worker --loglevel=info
+      - redis
+    command: celery -A flask_app.celery worker --loglevel=info
   tests:
     build:
       context: .
@@ -31,5 +30,5 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - rabbitmq
+      - redis
     command: pytest

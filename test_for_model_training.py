@@ -1,18 +1,19 @@
 import os
 import pickle
+
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import cross_val_score
+
 from tools.model_training import (
     calculate_distance,
-    calculate_representativeness,
     calculate_ensemble_prediction,
-    train_model,
-    representative_learning,
+    calculate_representativeness,
     convert_data_to_numpy_array,
+    create_models,
     find_optimal_L,
     random_split_data,
-    create_models,
+    representative_learning,
+    train_model,
 )
 
 
