@@ -35,7 +35,7 @@ jobs:
       - name: Run tests
         run: |
           container_id=${{ steps.start_container.outputs.container_id }}
-          docker exec representativeness_rest_service-app-1 python -m pytest
+          docker exec flask_app python -m pytest
 
       - name: Stop Docker container
         run: docker stop flask_app
