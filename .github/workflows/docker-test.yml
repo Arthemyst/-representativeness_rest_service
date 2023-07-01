@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests
         run: |
-          docker exec flask_app python -m pytest
+          docker exec pytest
           docker logs flask_app
 
       - name: Stop Docker container
