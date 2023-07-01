@@ -4,7 +4,7 @@ import os
 import json
 from tools.model_training import create_models
 from celery import Celery
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 from tools.environment_config import CustomEnvironment
 from tools.model_training import calculate_ensemble_prediction
 from tools.tools import (
@@ -68,6 +68,7 @@ def train():
     if request.method == "POST":
         remove_old_models(models_directory)
         session["model_created"] = False
+        session["training_started"] = True
 
         try:
             data = request.form["data"]
@@ -97,12 +98,7 @@ def train():
             session["elements_in_list"] = len(data[0])
             task = train_models_task.delay(data)
             session["task_id"] = task.id
-            
-   
-
-
-            return render_template("status.html", task_id=str(task.id))
-
+            return redirect(url_for("train_status", task_id=str(task.id)))
 
         except JSONDecodeError as e:
             session.update(
@@ -157,21 +153,25 @@ def train():
 
 @app.route("/status", methods=["GET"])
 def status():
+    training_started = session.get("training_started", False)
     training_in_progress = session.get("training_in_progress", False)
     training_end_time = session.get("training_end_time", False)
     model_created = session.get("model_created", False)
     training_start_time = session.get("training_start_time", False)
     error_message = session.get("error_message", False)
     error_time = session.get("error_time", False)
+    task_id = session.get("task_id", False)
 
     return render_template(
         "status.html",
+        training_started=training_started,
         training_in_progress=training_in_progress,
         training_end_time=training_end_time,
         model_created=model_created,
         training_start_time=training_start_time,
         error_message=error_message,
         error_time=error_time,
+        task_id=task_id,
     )
 
 
@@ -257,38 +257,35 @@ def predict():
             )
 
 
-@app.route("/status/<task_id>", methods=["GET"])
+@app.route("/train_status/<task_id>", methods=["GET"])
 def train_status(task_id):
-    # Retrieve the task result from Celery using the task ID
     task_result = celery.AsyncResult(task_id)
 
     if task_result.ready():
-        # If the task is complete, retrieve the result
-        session["training_in_progress"] = True
-        session["model_created"] = True
-        session["training_finished"] = True
+        session_results = task_result.get()
+        session.update(session_results)
 
-        # Render the status.html template with the task ID, status, and result
-        return render_template(
-            "status.html",
-            task_id=task_id,
-            training_in_progress=session["training_in_progress"],
-            model_created=session["model_created"],
-            training_finished=session["training_finished"],
-            training_start_time=session["training_start_time"]
-        )
+        if (
+            session["error_msg_for_train_page"]
+            == "Please enter more objects to create a model!"
+        ):
+            return render_template(
+                "train.html",
+                msg=session.get("error_message"),
+                training_in_progress=session["training_in_progress"],
+                model_created=session["model_created"],
+                training_finished=session["training_finished"],
+                training_start_time=session["training_start_time"],
+            )
+
+        else:
+            return redirect(
+                url_for("status"),
+            )
+
     else:
-        session["training_in_progress"] = False
-        session["model_created"] = False
-        session["training_finished"] = False
-        return render_template(
-            "status.html",
-            task_id=task_id,
-            training_in_progress=session["training_in_progress"],
-            model_created=session["model_created"],
-            training_finished=session["training_finished"],
-            training_start_time=session["training_start_time"]
-        )
+        return redirect(url_for("status"))
+
 
 @celery.task
 def train_models_task(data):
@@ -319,7 +316,7 @@ def train_models_task(data):
         return session_results
 
     except Exception as e:
-        error_msg = "WRONG"
+        error_msg = str(e)
         if str(e) == "Value of k should be less than the number of samples.":
             error_msg = "Please enter more objects to create a model!"
         session_results["model_created"] = False

@@ -20,7 +20,6 @@
 
 <body>
     <h1>Train Model</h1>
-
     <div class="frame">
         {% if training_in_progress %}
         <h3>Training is still in progress...</h3>
@@ -56,19 +55,17 @@
         }
     </script>
     <script>
-        // Periodically check for specific item change
         setInterval(function () {
             $.ajax({
                 url: '/train',
                 type: 'GET',
                 success: function (response) {
                     if (response.training_in_progress) {
-                        // Reload the page if the specific item has changed
                         location.reload();
                     }
                 }
             });
-        }, 5000);  // Adjust the interval as needed (e.g., every 5 seconds)
+        }, 5000);
     </script>
 </body>
 
