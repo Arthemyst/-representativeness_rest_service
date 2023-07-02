@@ -4,20 +4,18 @@ from datetime import datetime
 from json import JSONDecodeError
 
 from celery import Celery
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import (Flask, jsonify, redirect, render_template, request, session,
+                   url_for)
 
 from tools.environment_config import CustomEnvironment
 from tools.model_training import calculate_ensemble_prediction, create_models
-from tools.tools import (
-    load_models,
-    prepare_data_for_prediction,
-    prepare_data_for_train,
-    remove_old_models,
-)
+from tools.tools import (load_models, prepare_data_for_prediction,
+                         prepare_data_for_train, remove_old_models)
 
 app = Flask(__name__)
 app.config["CELERY_BROKER_URL"] = "redis://redis:6379/0"
-app.config["CELERY_RESULT_BACKEND"] = "redis://redis:6379/0"
+app.config["result_backend"] = "redis://redis:6379/0"
+app.config["broker_connection_retry_on_startup"] = True
 
 celery = Celery(app.name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
@@ -331,4 +329,4 @@ def train_models_task(data):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=False, host="0.0.0.0")
