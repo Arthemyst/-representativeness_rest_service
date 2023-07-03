@@ -4,9 +4,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 
 import numpy as np
+from models_database import store_model
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import NearestNeighbors
+
+from tools.environment_config import CustomEnvironment
 
 
 def calculate_distance(X: np.ndarray, k: int) -> Union[float, np.float64]:
@@ -92,17 +95,11 @@ def random_split_data(X: np.ndarray, L: int) -> List[np.ndarray]:
     return subsets
 
 
-def create_models(data: list, k: int = 5) -> None:
+def create_models(data: list, k: int = 5) -> List[LinearRegression]:
     X = convert_data_to_numpy_array(data)
     if k >= X.shape[0]:
         raise ValueError("Value of k should be less than the number of samples.")
     L = 2
     subsets = random_split_data(X, L)
     models = representative_learning(subsets, k)
-    directory = "models"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    for i, model in enumerate(models):
-        model_path = os.path.join(directory, f"model_{i}")
-        with open(model_path, "wb") as file:
-            pickle.dump(model, file)
+    return models

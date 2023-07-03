@@ -12,7 +12,6 @@
         }
 
         .content {
-            padding: 10px;
             border: 1p
         }
     </style>
@@ -31,7 +30,7 @@
         {% endif %}
     </div>
 
-    <div class="content">
+    <div>
         {% if not training_in_progress %}
         <p>Input data must be a list of lists with integers of equal length.</p>
         <p>For better model training results, include as many objects (lists of integers) as possible in the list.</p>
@@ -46,12 +45,23 @@
         <p>{{ msg }}</p>
         <p>For more information about error, please click status button.</p>
         {% endif %}
+        <div>
         <p><button onclick="redirectToStatusPage()">Status</button></p>
+        
+        {% if model_created %}
+        <p>Past model is created. You can use it!</p>
+        <button onclick="redirectToPredictPage()">Predict</button>
+        </div>
+        {% endif %}
+        </div>  
     </div>
 
     <script>
         function redirectToStatusPage() {
             window.location.href = "/status";
+        }
+        function redirectToPredictPage() {
+            window.location.href = "/predict";
         }
     </script>
     <script>
