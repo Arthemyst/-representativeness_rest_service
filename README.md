@@ -10,7 +10,7 @@ $ cd representativeness_rest_service
 ```
 This project requires Python 3.8 or later.
 
-Please create file .env in docker directory. The file format can be understood from the example below::
+Please create file .env in root directory. The file format can be understood from the example below::
 
 ```sh
 SECRET_KEY=your_secret_key
