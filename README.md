@@ -14,7 +14,7 @@ Model training page
 
 Status page
 
-![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/8aca5c10-2df9-4560-8142-7014d269e89d)
+![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/4c6c0544-e40b-4c9b-8779-2e84914a2274)
 
 
 Prediction page
