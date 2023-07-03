@@ -49,3 +49,4 @@ Docker:
 - celery
 - redis
 - pytest
+- mongoDB
