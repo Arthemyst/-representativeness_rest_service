@@ -28,18 +28,6 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/session_items", methods=["GET"])
-def session_items():
-    items = dict(session)
-    return jsonify(items)
-
-
-@app.route("/clear_session", methods=["GET"])
-def clear_session():
-    session.clear()
-    return "Session cleared"
-
-
 @app.route("/train", methods=["GET", "POST"])
 def train():
     models_with_names = load_latest_model()
