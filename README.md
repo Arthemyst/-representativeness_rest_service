@@ -5,16 +5,20 @@ Application for training and using prediction models.
 ## Images from website
 
 Home page
+
 ![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/18a9f0ef-4e68-483a-996a-6b5952de92cc)
 
 Model training page
+
 ![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/ce00ae8d-d096-480d-9de3-b1180d8cb90d)
 
 Status page
+
 ![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/8aca5c10-2df9-4560-8142-7014d269e89d)
 
 
 Prediction page
+
 ![image](https://github.com/Arthemyst/representativeness_rest_service/assets/59807704/0cec1044-26d0-4c6e-99fd-873150b676d8)
 
 
