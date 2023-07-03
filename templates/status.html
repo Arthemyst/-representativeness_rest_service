@@ -17,45 +17,58 @@
     <h1>Training Status</h1>
     <div class="frame">
         {% if training_started %}
-        {% if training_in_progress %}
-        <p>Training is still in progress.</p>
-        <p>Training started at: {{ training_start_time }}</p>
-        <button onclick="redirectToTrainStatusPage()">Refresh page</button>
-        <button onclick="redirectToHomePage()">Home page</button>
-        {% endif %}
-
-        {% if not training_in_progress %}
-        {% if not model_created %}
-        {% if not error_message %}
-        {% if task_id %}
-        <p>No training is currently in progress and no model is prepared.</p>
-        <button onclick="redirectToTrainPage()">Train Model</button>
-        {% endif %}
+            {% if training_in_progress %}
+                <p>Training is still in progress.</p>
+                <p>Training started at: {{ training_start_time }}</p>
+                <button onclick="redirectToTrainStatusPage()">Refresh page</button>
+                <button onclick="redirectToHomePage()">Home page</button>
+            {% endif %}
+            {% if not training_in_progress %}
+                {% if not error_message %}
+                    {% if task_id %}
+                        {% if not model_created %}
+                        <p>No training is currently in progress and no model is prepared.</p>
+                        <button onclick="redirectToTrainPage()">Train Model</button>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        
+    
+            {% if not training_in_progress %}
+                {% if model_created %}
+                        <p>Training is not in progress and the model has been created.</p>
+                        <p>Latest training started at: {{ training_start_time }}</p>
+                        <p>Latest training ended at: {{ training_end_time }}</p>
+                        <button onclick="redirectToPredictPage()">Predict</button>
+                        <button onclick="redirectToTrainPage()">Train Model</button>
+                {% endif %}
+                {% endif %}
         {% else %}
-        <p>Error during training!</p>
-        <p>Last error: {{ error_message }}</p>
-        <p>Last error time: {{ error_time }}</p>
-        <button onclick="redirectToTrainPage()">Train Model</button>
-        {% endif %}
-        {% endif %}
+            {% if model_created %}
+                <p>Model is created. You can use it or create new.</p>
+                <button onclick="redirectToPredictPage()">Predict</button>
+                <button onclick="redirectToTrainPage()">Train Model</button>
+            {% else %}
+                <p>Please do some action first</p>
+                <button onclick="redirectToTrainPage()">Train Model</button>
+            {% endif %}
         {% endif %}
 
-        {% if not training_in_progress %}
-        {% if model_created %}
-        {% if task_id %}
-        <p>Training is not in progress and the model has been created.</p>
-        <p>Training started at: {{ training_start_time }}</p>
-        <p>Training ended at: {{ training_end_time }}</p>
 
-        <button onclick="redirectToPredictPage()">Predict</button>
-        <button onclick="redirectToTrainPage()">Train Model</button>
+        {%if error_message %}
+            <p>Error during latest training!</p>
+            <p>Latest error: {{ error_message }}</p>
+            <p>Latest error time: {{ error_time }}</p>
+            {%if not training_in_progress%}
+                {%if training_started %}
+                    {%if not model_created %}
+                    <button onclick="redirectToTrainPage()">Train Model</button>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
         {% endif %}
-        {% endif %}
-        {% endif %}
-        {% else %}
-        <p>Please do some action first</p>
-        <button onclick="redirectToTrainPage()">Train Model</button>
-        {% endif %}
+
     </div>
 
 
@@ -83,16 +96,24 @@
         }
 
         setInterval(function () {
-            $.ajax({
-                url: "/train_status/{{task_id}}",
-                type: 'GET',
-                success: function (response) {
-                    if (response.training_in_progress) {
-                        redirectToTrainStatusPage(); // Redirect to /train_status/{{task_id}} endpoint
-                    }
-                }
-            });
-        }, 5000);
+    var url;
+    if ("{{task_id}}") {
+        url = "/train_status/{{task_id}}";
+    } else {
+        url = "/status";
+    }
+
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function (response) {
+            if (response.training_in_progress) {
+                redirectToTrainStatusPage();
+            }
+        }
+    });
+}, 5000);
+
 
         {% if training_in_progress %}
         setTimeout(function () {

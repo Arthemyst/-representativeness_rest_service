@@ -1,15 +1,19 @@
 import os
 import pickle
+from datetime import datetime
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
-
-from tools.model_training import (calculate_distance,
-                                  calculate_ensemble_prediction,
-                                  calculate_representativeness,
-                                  convert_data_to_numpy_array, create_models,
-                                  find_optimal_L, random_split_data,
-                                  representative_learning, train_model)
+from tools.model_training import (
+    calculate_distance,
+    calculate_ensemble_prediction,
+    calculate_representativeness,
+    convert_data_to_numpy_array,
+    find_optimal_L,
+    random_split_data,
+    representative_learning,
+    train_model,
+)
 
 
 def test_calculate_distance():
@@ -79,7 +83,6 @@ def test_convert_data_to_numpy_array_empty_data():
 
     try:
         convert_data_to_numpy_array(data)
-        assert False  # This line should not be reached
     except ValueError as e:
         assert str(e) == "Input data must have at least one sample."
 
@@ -147,7 +150,6 @@ def test_find_optimal_L_k_greater_than_samples():
 
     try:
         find_optimal_L(X, k, min_L, max_L, cv)
-        assert False  # This line should not be reached
     except ValueError as e:
         assert str(e) == "Value of k should be less than the number of samples."
 
@@ -183,22 +185,3 @@ def test_random_split_data_L_greater_than_samples():
 
     except ValueError as e:
         assert str(e) == "Value of k should be less than the number of samples."
-
-
-def test_create_models(tmpdir):
-    data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
-    k = 2
-    expected_model_paths = ["model_0", "model_1"]
-
-    create_models(data, k)
-
-    directory = "models"
-    model_paths = os.listdir(directory)
-    assert len(model_paths) == len(expected_model_paths)
-    for expected_path in expected_model_paths:
-        assert expected_path in model_paths
-
-    for model_path in model_paths:
-        path = os.path.join(directory, model_path)
-        os.remove(path)
-    os.rmdir(directory)

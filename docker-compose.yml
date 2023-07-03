@@ -10,11 +10,18 @@ services:
       - .:/app
     depends_on:
       - redis
+      - mongodb
 
   redis:
     image: redis:latest
     ports:
       - 6379:6379
+  mongodb:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
   celery-worker:
     build:
       context: .
@@ -23,6 +30,7 @@ services:
       - .:/app
     depends_on:
       - redis
+      - mongodb
     command: celery -A flask_app.celery worker --loglevel=info
 
   tests:
@@ -34,3 +42,5 @@ services:
     depends_on:
       - redis
     command: pytest tests
+volumes:
+  mongodb_data:
