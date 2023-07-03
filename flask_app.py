@@ -48,15 +48,12 @@ def train():
         task_id = session.get("task_id")
         session["training_in_progress"] = False
 
-        # If task ID exists, check the status of the task
         if task_id:
             task = train_models_task.AsyncResult(task_id)
             if task.ready():
-                # Task is completed, retrieve the result
-                # session['result'] = task.get()
+
                 session["training_in_progress"] = False
             else:
-                # Task is still in progress
                 session["training_in_progress"] = True
         return render_template(
             "train.html",
@@ -84,13 +81,11 @@ def train():
                     "train.html", bad_data=True, msg=session.get("error_message")
                 )
 
-            session_data = {}
-            for key, value in session.items():
-                session_data[key] = value
+
             session.update(
                 {
                     "training_in_progress": True,
-                    "training_start_time": str(datetime.now()),
+                    "training_start_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "training_finished": False,
                 }
             )
@@ -102,7 +97,7 @@ def train():
         except JSONDecodeError as e:
             session.update(
                 {
-                    "error_time": str(datetime.now()),
+                    "error_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -116,7 +111,7 @@ def train():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": str(datetime.now()),
+                    "error_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -135,7 +130,7 @@ def train():
         except Exception as e:
             session.update(
                 {
-                    "error_time": str(datetime.now()),
+                    "error_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "error_message": str(e),
                     "training_in_progress": False,
                 }
@@ -231,7 +226,7 @@ def predict():
         except ValueError as e:
             session.update(
                 {
-                    "error_time": str(datetime.now()),
+                    "error_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "error_message": str(e),
                 }
             )
@@ -244,7 +239,7 @@ def predict():
         except Exception as e:
             session.update(
                 {
-                    "error_time": str(datetime.now()),
+                    "error_time": datetime.now().strftime("%Y-%m-%d-%H:%M:%s"),
                     "error_message": str(e),
                 }
             )
@@ -294,7 +289,7 @@ def train_models_task(data):
         create_models(data)
         session_results["model_created"] = True
         session_results["training_finished"] = True
-        session_results["training_end_time"] = str(datetime.now())
+        session_results["training_end_time"] = datetime.now().strftime("%Y-%m-%d-%H:%M:%s")
         session_results["training_in_progress"] = False
         session_results["error_msg_for_train_page"] = None
         session_results["error_time"] = False
@@ -310,7 +305,7 @@ def train_models_task(data):
         session_results["training_end_time"] = None
         session_results["training_in_progress"] = False
         session_results["error_msg_for_train_page"] = error_msg
-        session_results["error_time"] = str(datetime.now())
+        session_results["error_time"] = datetime.now().strftime("%Y-%m-%d-%H:%M:%s")
         session_results["error_message"] = str(e)
         return session_results
 
@@ -323,7 +318,7 @@ def train_models_task(data):
         session_results["training_end_time"] = None
         session_results["training_in_progress"] = False
         session_results["error_msg_for_train_page"] = error_msg
-        session_results["error_time"] = str(datetime.now())
+        session_results["error_time"] = datetime.now().strftime("%Y-%m-%d-%H:%M:%s")
         session_results["error_message"] = str(e)
         return session_results
 
