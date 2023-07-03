@@ -1,6 +1,6 @@
 # representativeness_rest_service
 ## Introduction
-Application for training and using prediction models.
+Application for training and using prediction models. Celery with Redis was used to perform the task of training the model asynchronously.
 
 ## Images from website
 
